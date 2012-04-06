@@ -60,6 +60,13 @@ class YamlSerializer(BaseSerializer):
         return yaml.dump(data)
 
 
+class CustomSerializer(BaseSerializer):
+    def __init__(self, content_type, dumps, loads):
+        self.content_type = content_type
+        self.loads = loads
+        self.dumps = dumps
+
+
 class Serializer(object):
 
     _serializers = {
@@ -67,11 +74,19 @@ class Serializer(object):
         "yaml": YamlSerializer(),
     }
 
-    def __init__(self, default_format="json"):
-        default_format = default_format if default_format is not None else "json"
-
+    def __init__(self, default_format="json", custom_codecs=None):
         self.available_serializers = [x[0] for x in SERIALIZERS.items() if x[1]]
+
+        if custom_codecs:
+            for format, serializer in self._serializers.items():
+                if format in custom_codecs:
+                    dumps, loads = custom_codecs[format]
+                    self._serializers[format] = CustomSerializer(serializer.get_content_type(),
+                                                                 dumps, loads)
+
+        default_format = default_format if default_format is not None else "json"
         self.default_format = self.get_serializer(default_format)
+
 
     def get_serializer(self, name=None):
         if name is None:

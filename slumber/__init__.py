@@ -89,7 +89,8 @@ class Resource(ResourceAttributesMixin, object):
         return self.__class__(**kwargs)
 
     def get_serializer(self):
-        return Serializer(default_format=self._store["format"])
+        return Serializer(default_format=self._store["format"],
+                          custom_codecs=self._store.get("custom_codecs", {}))
 
     def _request(self, method, data=None, params=None):
         s = self.get_serializer()
@@ -159,12 +160,14 @@ class Resource(ResourceAttributesMixin, object):
 
 class API(ResourceAttributesMixin, object):
 
-    def __init__(self, base_url=None, auth=None, format=None, append_slash=True):
+    def __init__(self, base_url=None, auth=None, format=None, append_slash=True,
+                 custom_codecs=None):
         self._store = {
             "base_url": base_url,
             "format": format if format is not None else "json",
             "append_slash": append_slash,
             "session": requests.session(auth=auth),
+            "custom_codecs": custom_codecs if custom_codecs is not None else {}
         }
 
         # Do some Checks for Required Values
